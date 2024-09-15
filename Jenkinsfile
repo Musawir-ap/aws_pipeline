@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    tools {
+        maven "Maven-3.9.9"
+    }
+
+
     environment {
         DOCKER_REGISTRY = 'docker.io/your-dockerhub-username'
         DOCKER_IMAGE = 'your-app-name'
