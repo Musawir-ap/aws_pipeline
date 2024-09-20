@@ -2,13 +2,12 @@ pipeline {
     agent any
 
     tools {
-        maven "Maven-3.9.9"
+        maven "M3"
     }
 
-
     environment {
-        DOCKER_REGISTRY = 'docker.io/your-dockerhub-username'
-        DOCKER_IMAGE = 'your-app-name'
+        DOCKER_REGISTRY = 'docker.io/devmusawir'
+        DOCKER_IMAGE = 'products-app'
         DOCKER_CREDENTIALS_ID = 'dockerhub-credentials-id'
         ANSIBLE_PLAYBOOK_PATH = '/path/to/your/ansible/playbook.yml'
         ANSIBLE_INVENTORY_PATH = '/path/to/your/ansible/inventory'
@@ -25,8 +24,8 @@ pipeline {
         stage('Build and Test') {
             steps {
                 script {
-                    sh 'mvn clean package' // Build the Maven project
-                    sh 'mvn test' // Run unit tests
+                    sh 'mvn clean package' 
+                    sh 'mvn test' 
                 }
             }
         }
@@ -81,7 +80,7 @@ pipeline {
                 // emailext subject: "Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                 //         body: "Build #${env.BUILD_NUMBER} has failed. Check the logs: ${env.BUILD_URL}",
                 //         to: 'youremail@example.com'
-                echo 'Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}'
+                echo "Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
             }
         }
 
