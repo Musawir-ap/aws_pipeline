@@ -6,7 +6,7 @@ pipeline {
     }
 
     environment {
-        DOCKER_REGISTRY = 'docker.io/devmusawir'
+        DOCKER_REGISTRY = 'devmusawir'
         DOCKER_IMAGE = 'products-app'
         DOCKER_CREDENTIALS_ID = 'dockerhub-credentials-id'
         ANSIBLE_PLAYBOOK_PATH = '/path/to/your/ansible/playbook.yml'
