@@ -30,23 +30,23 @@ pipeline {
             }
         }
 
-        // stage('Build Docker Image') {
-        //     steps {
-        //         script {
-        //             sh "docker build -t ${env.DOCKER_REGISTRY}/${env.DOCKER_IMAGE}:latest ."
-        //         }
-        //     }
-        // }
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    sh "docker build -t ${env.DOCKER_REGISTRY}/${env.DOCKER_IMAGE}:latest ."
+                }
+            }
+        }
 
-        // stage('Push to Docker Registry') {
-        //     steps {
-        //         script {
-        //             docker.withRegistry('https://index.docker.io/v1/', "${env.DOCKER_CREDENTIALS_ID}") {
-        //                 sh "docker push ${env.DOCKER_REGISTRY}/${env.DOCKER_IMAGE}:latest"
-        //             }
-        //         }
-        //     }
-        // }
+        stage('Push to Docker Registry') {
+            steps {
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', "${env.DOCKER_CREDENTIALS_ID}") {
+                        sh "docker push ${env.DOCKER_REGISTRY}/${env.DOCKER_IMAGE}:latest"
+                    }
+                }
+            }
+        }
 
         // stage('Deploy with Ansible') {
         //     steps {
