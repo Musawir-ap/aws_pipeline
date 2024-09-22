@@ -9,10 +9,11 @@ pipeline {
         DOCKER_REGISTRY = 'devmusawir'
         DOCKER_IMAGE = 'products-app'
         DOCKER_CREDENTIALS_ID = 'dockerhub-credentials-id'
-        ANSIBLE_PLAYBOOK_PATH = '/path/to/your/ansible/playbook.yml'
-        ANSIBLE_INVENTORY_PATH = '/path/to/your/ansible/inventory'
+        ANSIBLE_PLAYBOOK_PATH = 'ansible/playbooks/deploy_kubernetes.yml'
+        ANSIBLE_INVENTORY_PATH = 'ansible/inventory.ini'
         GIT_REPO_URL = 'https://github.com/Musawir-ap/Products-pipeline.git'
-    }
+        SUDO_PASSWORD = credentials('SUDO_PASSWORD')
+    }  
 
     stages {
         stage('Checkout Source Code') {
@@ -44,6 +45,17 @@ pipeline {
                     docker.withRegistry('https://index.docker.io/v1/', "${env.DOCKER_CREDENTIALS_ID}") {
                         sh "docker push ${env.DOCKER_REGISTRY}/${env.DOCKER_IMAGE}:latest"
                     }
+                }
+            }
+        }
+
+        stage('Deploy with Ansible') {
+            steps {
+                script {
+                    sh """
+                    ansible-playbook -i ${env.ANSIBLE_INVENTORY_PATH} ${env.ANSIBLE_PLAYBOOK_PATH} \
+                    --extra-vars "docker_image=${env.DOCKER_REGISTRY}/${env.DOCKER_IMAGE}:latest ansible_become_pass=${SUDO_PASSWORD}"
+                    """
                 }
             }
         }
