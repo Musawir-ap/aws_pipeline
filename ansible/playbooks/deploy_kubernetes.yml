@@ -38,6 +38,7 @@
         dest: /usr/local/bin/kubectl
         state: link
       become: true
+      become_user: root
 
     # Display K3s version
     - name: Display K3s version
