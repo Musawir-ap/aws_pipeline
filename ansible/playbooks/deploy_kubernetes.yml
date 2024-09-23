@@ -26,19 +26,12 @@
       when: k3s_installed.rc != 0
       changed_when: true
 
-    # Configure kubectl only if K3s is installed
-    # - name: Configure kubectl
-    #   ansible.builtin.command: ln -s /usr/local/bin/k3s /usr/local/bin/kubectl
-    #   when: k3s_installed.rc == 0
-    #   changed_when: true
-    #   become: true
     - name: Configure kubectl
       ansible.builtin.file:
         src: /usr/local/bin/k3s
         dest: /usr/local/bin/kubectl
         state: link
       become: true
-      become_user: root
 
     # Display K3s version
     - name: Display K3s version

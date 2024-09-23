@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent { label 'abdul' }
 
     tools {
         maven "M3"
@@ -13,7 +13,7 @@ pipeline {
         ANSIBLE_INVENTORY_PATH = 'ansible/inventory.ini'
         GIT_REPO_URL = 'https://github.com/Musawir-ap/Products-pipeline.git'
         SUDO_PASSWORD = credentials('SUDO_PASSWORD')
-    }  
+    }
 
     stages {
         stage('Checkout Source Code') {
@@ -34,7 +34,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh "docker build -t ${env.DOCKER_REGISTRY}/${env.DOCKER_IMAGE}:latest ."
+                    dockerImage = docker.build("${env.DOCKER_REGISTRY}/${env.DOCKER_IMAGE}:latest")
                 }
             }
         }
@@ -42,8 +42,8 @@ pipeline {
         stage('Push to Docker Registry') {
             steps {
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/', "${env.DOCKER_CREDENTIALS_ID}") {
-                        sh "docker push ${env.DOCKER_REGISTRY}/${env.DOCKER_IMAGE}:latest"
+                    docker.withRegistry('', "${env.DOCKER_CREDENTIALS_ID}") {
+                        dockerImage.push('latest')
                     }
                 }
             }
@@ -51,35 +51,16 @@ pipeline {
 
         stage('Deploy with Ansible') {
             steps {
-                script {
-                    sh """
-                    ansible-playbook -i ${env.ANSIBLE_INVENTORY_PATH} ${env.ANSIBLE_PLAYBOOK_PATH} \
-                    --extra-vars "docker_image=${env.DOCKER_REGISTRY}/${env.DOCKER_IMAGE}:latest ansible_become_pass=${SUDO_PASSWORD}"
-                    """
-                }
+                ansiblePlaybook(
+                    playbook: "${env.ANSIBLE_PLAYBOOK_PATH}",
+                    inventory: "${env.ANSIBLE_INVENTORY_PATH}",
+                    extraVars: [
+                            ansible_become_pass: "${SUDO_PASSWORD}" 
+                        ],
+                    extras: '-v'
+                )
             }
         }
-
-        // stage('Deploy with Ansible') {
-        //     steps {
-        //         script {
-        //             sh """
-        //                 ansible-playbook -i ${env.ANSIBLE_INVENTORY_PATH} ${env.ANSIBLE_PLAYBOOK_PATH} \
-        //                 -e docker_image=${env.DOCKER_REGISTRY}/${env.DOCKER_IMAGE}:latest
-        //             """
-        //         }
-        //     }
-        // }
-
-        // stage('Send Email Notification') {
-        //     steps {
-        //         script {
-        //             emailext subject: "Build Successful: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-        //                     body: "Good job! Build #${env.BUILD_NUMBER} was successful. View it here: ${env.BUILD_URL}",
-        //                     to: 'youremail@example.com'
-        //         }
-        //     }
-        // }
     }
 
     post {
@@ -97,7 +78,7 @@ pipeline {
         }
 
         always {
-            cleanWs() // Clean up workspace after build
+            cleanWs()
         }
     }
 }
