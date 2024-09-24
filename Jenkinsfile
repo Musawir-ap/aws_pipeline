@@ -9,7 +9,7 @@ pipeline {
         DOCKER_REGISTRY = 'devmusawir'
         DOCKER_IMAGE = 'products-app'
         DOCKER_CREDENTIALS_ID = 'dockerhub-credentials-id'
-        ANSIBLE_PLAYBOOK_PATH = 'ansible/playbooks/deploy_kubernetes.yml'
+        ANSIBLE_PLAYBOOK_PATH = 'ansible/playbooks/deploy_k8s.yml'
         ANSIBLE_INVENTORY_PATH = 'ansible/inventory.ini'
         GIT_REPO_URL = 'https://github.com/Musawir-ap/Products-pipeline.git'
         SUDO_PASSWORD = credentials('SUDO_PASSWORD')
