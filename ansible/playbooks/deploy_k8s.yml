@@ -111,7 +111,12 @@
         state: restarted
       become: true
 
-
+    - name: Install Kubernetes Python module
+      ansible.builtin.pip:
+        name: kubernetes
+        state: present
+        executable: pip3
+      become: true
     # - name: Display kubeconfig file content
     #   ansible.builtin.command: "cat {{ ansible_env.HOME }}/.kube/config"
     #   register: kubeconfig_content
