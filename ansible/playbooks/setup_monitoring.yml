@@ -1,6 +1,6 @@
 ---
 - name: Setup Monitoring for Kubernetes
-  hosts: localhost
+  hosts: local
   vars:
     monitoring_namespace: k8s-monitoring
 
@@ -48,14 +48,10 @@
         chart_ref: prometheus-community/prometheus
         release_namespace: "{{ monitoring_namespace }}"
         create_namespace: true
-        # force: true
         values:
-          values:
-            server:
-              service:
-                type: NodePort
-            rbac:
-              create: false
+          server:
+            service:
+              type: NodePort
         wait: true
 
     - name: Install Grafana using Helm
@@ -70,18 +66,6 @@
           service:
             type: NodePort
         wait: true
-
-    # - name: Install Grafana using Helm
-    #   kubernetes.core.helm:
-    #     name: grafana
-    #     chart_ref: grafana/grafana
-    #     release_namespace: "{{ monitoring_namespace }}"
-    #     create_namespace: true
-    #     values:
-    #       adminPassword: "{{ grafana_pass }}"
-    #       service:
-    #         type: NodePort
-    #     wait: true
 
     - name: Get Grafana service details
       kubernetes.core.k8s_info:

@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: webapp-deployment
+  name: webapp
   namespace: products-app
 spec:
   replicas: 1
@@ -20,7 +20,7 @@ spec:
         - containerPort: 8080
         env:
         - name: DB_HOST
-          value: "mysql-service"
+          value: "mysql"
         - name: DB_NAME
           valueFrom:
             secretKeyRef:

@@ -1,16 +1,16 @@
 ---
 - name: Deploy to k8s
-  hosts: localhost
+  hosts: local
+  vars:
+    k8s_namespace: products-app
   tasks:
 
-    # Check if K3s is installed
     - name: Check if K3s is installed
       ansible.builtin.command: k3s --version
       register: k3s_installed
       ignore_errors: true
       changed_when: false
 
-    # Download K3s installation script if not installed
     - name: Download K3s installation script
       ansible.builtin.get_url:
         url: https://get.k3s.io
@@ -19,7 +19,6 @@
       when: k3s_installed.rc != 0
       changed_when: true
 
-    # Install K3s if not already installed
     - name: Install K3s
       ansible.builtin.shell: |
         set -o pipefail
@@ -29,7 +28,6 @@
       changed_when: true
       register: k3s_install
 
-    # Set permissions for K3s
     - name: Set permissions for /etc/rancher/k3s/ to allow user access
       ansible.builtin.file:
         path: /etc/rancher/k3s/
@@ -37,7 +35,6 @@
       when: ansible_env.USER != 'root'
       become: true
 
-    # Configure kubectl
     - name: Configure kubectl
       ansible.builtin.file:
         src: /usr/local/bin/k3s
@@ -45,7 +42,6 @@
         state: link
       become: true
 
-    # Display K3s version
     - name: Display K3s version
       ansible.builtin.debug:
         var: k3s_installed.stdout
@@ -117,16 +113,7 @@
         state: present
         executable: pip3
       become: true
-    # - name: Display kubeconfig file content
-    #   ansible.builtin.command: "cat {{ ansible_env.HOME }}/.kube/config"
-    #   register: kubeconfig_content
-    #   changed_when: false
 
-    # - name: Display kubeconfig
-    #   ansible.builtin.debug:
-    #     var: kubeconfig_content.stdout
-
-    # Create the namespace for the application
     - name: Create namespace if it doesn't exist
       kubernetes.core.k8s:
         state: present
@@ -134,7 +121,7 @@
           apiVersion: v1
           kind: Namespace
           metadata:
-            name: products-app
+            name: "{{ k8s_namespace }}"
         verify_ssl: false
         kubeconfig: "{{ ansible_env.HOME }}/.kube/config"
       become: true
@@ -143,7 +130,7 @@
       kubernetes.core.k8s:
         state: present
         definition: "{{ lookup('file', item.path) }}"
-        namespace: products-app
+        namespace: "{{ k8s_namespace }}"
         verify_ssl: false
       loop:
         - { name: "MySQL Secrets", path: "../../k8s/secrets/mysql-secret.yaml" }

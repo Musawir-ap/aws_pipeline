@@ -27,6 +27,8 @@ ansible/
 # Ignore Kubernetes manifest files
 k8s/
 
+charts/
+
 # Ignore temporary files, swap files, and logs
 *.log
 *.swp

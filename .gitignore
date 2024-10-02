@@ -16,5 +16,11 @@ buildNumber.properties
 # JDT-specific (Eclipse Java Development Tools)
 .classpath
 
-
+# Ignore IDE-specific files and directories
+.classpath
+.project
+.settings/
 .vscode/
+
+# Ignore modified dashboard template
+charts/dashboards/grafana-dashboard-modified.json

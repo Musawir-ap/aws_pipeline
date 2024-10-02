@@ -1,27 +1,14 @@
-# apiVersion: v1
-# kind: Service
-# metadata:
-#   name: webapp-service
-#   namespace: products-app
-# spec:
-#   ports:
-#   - port: 8080
-#     targetPort: 8080
-#   selector:
-#     app: webapp
-#   type: NodePort
-
 apiVersion: v1
 kind: Service
 metadata:
-  name: webapp-service
+  name: webapp
   namespace: products-app
 spec:
-  type: NodePort  # Expose the service using NodePort
+  type: NodePort
   selector:
-    app: webapp  # This matches the label defined in the web app deployment
+    app: webapp
   ports:
     - protocol: TCP
-      port: 8080        # Port exposed by the service inside the cluster
-      targetPort: 8080  # Port the web app listens on inside the container
-      nodePort: 30081   # Port exposed on the node (choose any in the range 30000-32767)
+      port: 8080
+      targetPort: 8080
+      nodePort: 30081

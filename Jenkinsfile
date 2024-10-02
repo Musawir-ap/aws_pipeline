@@ -9,7 +9,8 @@ pipeline {
         DOCKER_REGISTRY = 'devmusawir'
         DOCKER_IMAGE = 'products-app'
         DOCKER_CREDENTIALS_ID = 'dockerhub-credentials-id'
-        ANSIBLE_PLAYBOOK_PATH = 'ansible/playbooks/deploy_k8s.yml'
+        DEPLOY_K8S_PLAYBOOK = 'ansible/playbooks/deploy_k8s.yml'
+        K8S_MONITORING_PLAYBOOK = 'ansible/playbooks/setup_monitoring.yml'
         ANSIBLE_INVENTORY_PATH = 'ansible/inventory.ini'
         GIT_REPO_URL = 'https://github.com/Musawir-ap/Products-pipeline.git'
         SUDO_PASSWORD = credentials('SUDO_PASSWORD')
@@ -52,13 +53,28 @@ pipeline {
         stage('Deploy with Ansible') {
             steps {
                 ansiblePlaybook(
-                    playbook: "${env.ANSIBLE_PLAYBOOK_PATH}",
+                    playbook: "${env.DEPLOY_K8S_PLAYBOOK}",
                     inventory: "${env.ANSIBLE_INVENTORY_PATH}",
                     extraVars: [
                             ansible_become_pass: "${SUDO_PASSWORD}" 
                         ],
                     extras: '-v'
                 )
+            }
+        }
+
+        stage('Setup Monitoring') {
+            steps {
+                withCredentials([file(credentialsId: 'vault-password-id', variable: 'VAULT_PASSWORD_FILE')]) {
+                    ansiblePlaybook(
+                        playbook: "${env.K8S_MONITORING_PLAYBOOK}",
+                        inventory: "${env.ANSIBLE_INVENTORY_PATH}",
+                        extraVars: [
+                            ansible_become_pass: "${SUDO_PASSWORD}" ,
+                        ],
+                        extras: "--vault-password-file=${VAULT_PASSWORD_FILE}"
+                    )
+                }
             }
         }
     }
