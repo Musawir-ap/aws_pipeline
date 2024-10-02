@@ -19,6 +19,29 @@
           metadata:
             name: "{{ monitoring_namespace }}"
 
+    # - name: Download Helm installation script
+    #   ansible.builtin.get_url:
+    #     url: https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+    #     dest: /tmp/get_helm.sh
+    #     mode: '0755'
+
+    # - name: Add /usr/local/bin to PATH
+    #   ansible.builtin.lineinfile:
+    #     path: "{{ ansible_env.HOME }}/{{ lookup('env', 'SHELL') | basename }}rc"
+    #     line: 'export PATH=$PATH:/usr/local/bin'
+
+    # - name: Reload shell configuration
+    #   ansible.builtin.shell: "source {{ ansible_env.HOME }}/{{ lookup('env', 'SHELL') | basename }}rc"
+    #   args:
+    #     executable: "{{ lookup('env', 'SHELL') }}"
+    #   changed_when: false
+
+    # - name: Run Helm installation script
+    #   ansible.builtin.command: /tmp/get_helm.sh
+    #   args:
+    #     creates: /usr/local/bin/helm
+    #   register: helm_install_result
+    #   become: true
     - name: Download Helm command line tool
       ansible.builtin.uri:
         url: https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
@@ -30,6 +53,13 @@
         cmd: bash
         stdin: "{{ helm_installer.content }}"
         creates: /usr/local/bin/helm
+      become: true
+      environment:
+        PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+
+    # - name: Verify Helm installation
+    #   ansible.builtin.command: helm version
+    #   become: true
 
     - name: Add Prometheus community Helm repository
       kubernetes.core.helm_repository:

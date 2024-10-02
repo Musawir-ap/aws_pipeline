@@ -86,7 +86,7 @@
       ansible.builtin.shell: "source {{ ansible_env.HOME }}/{{ lookup('env', 'SHELL') | basename }}rc"
       args:
         executable: "{{ lookup('env', 'SHELL') }}"
-      changed_when: true
+      changed_when: false
 
     - name: Add write-kubeconfig-mode to K3s service
       ansible.builtin.lineinfile:
