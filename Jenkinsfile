@@ -1,5 +1,5 @@
 pipeline {
-    agent { label 'abdul' }
+    agent none
 
     tools {
         maven "M3"
@@ -18,12 +18,14 @@ pipeline {
 
     stages {
         stage('Checkout Source Code') {
+            agent { label 'built-in' }
             steps {
                 git branch: 'main', url: "${env.GIT_REPO_URL}"
             }
         }
 
         stage('Build and Test') {
+            agent { label 'build' }
             steps {
                 script {
                     sh 'mvn clean package' 
@@ -33,6 +35,7 @@ pipeline {
         }
 
         stage('Build Docker Image') {
+            agent { label 'build' }
             steps {
                 script {
                     dockerImage = docker.build("${env.DOCKER_REGISTRY}/${env.DOCKER_IMAGE}:latest")
@@ -41,6 +44,7 @@ pipeline {
         }
 
         stage('Push to Docker Registry') {
+            agent { label 'deploy' }
             steps {
                 script {
                     docker.withRegistry('', "${env.DOCKER_CREDENTIALS_ID}") {
@@ -51,6 +55,7 @@ pipeline {
         }
 
         stage('Deploy with Ansible') {
+            agent { label 'deploy' }
             steps {
                 ansiblePlaybook(
                     playbook: "${env.DEPLOY_K8S_PLAYBOOK}",
@@ -64,6 +69,7 @@ pipeline {
         }
 
         stage('Setup Monitoring') {
+            agent { label 'deploy' }
             steps {
                 withCredentials([file(credentialsId: 'vault-password-id', variable: 'VAULT_PASSWORD_FILE')]) {
                     ansiblePlaybook(
@@ -94,7 +100,9 @@ pipeline {
         }
 
         always {
-            cleanWs()
+            node('built-in') {
+                cleanWs()
+            }
         }
     }
 }
