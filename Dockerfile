@@ -1,10 +1,10 @@
-FROM maven:3.9.9-eclipse-temurin-8-alpine AS build
+FROM maven:3.8.5-openjdk-17-slim AS build
 WORKDIR /app
 
 COPY pom.xml .
 COPY src ./src
 
-RUN mvn clean package
+RUN mvn clean package -Dmaven.test.skip=true
 
 FROM tomcat:9.0.95-jre8-temurin-jammy
 

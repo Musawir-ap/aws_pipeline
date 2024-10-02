@@ -24,12 +24,21 @@ pipeline {
             }
         }
 
-        stage('Build and Test') {
+        stage('Maven Install and Test') {
             agent { label 'build' }
             steps {
                 script {
-                    sh 'mvn clean package' 
+                    sh 'mvn clean install -Dmaven.test.skip=true' 
                     sh 'mvn test' 
+                }
+            }
+        }
+
+        stage('Build') {
+            agent { label 'build' }
+            steps {
+                script {
+                    sh 'mvn clean package -Dmaven.test.skip=true' 
                 }
             }
         }
