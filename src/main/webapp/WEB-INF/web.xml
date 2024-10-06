@@ -4,4 +4,25 @@
 
 <web-app>
   <display-name>Archetype Created Web Application</display-name>
+
+  <!-- Servlet for Add Product -->
+  <!-- <servlet>
+    <servlet-name>AddProductServlet</servlet-name>
+    <servlet-class>com.abc.servlet.AddProductServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>AddProductServlet</servlet-name>
+    <url-pattern>/addProduct</url-pattern>
+  </servlet-mapping> -->
+
+  <!-- Servlet for View Products -->
+  <!-- <servlet>
+    <servlet-name>DisplayProductServlet</servlet-name>
+    <servlet-class>com.abc.servlet.DisplayProductServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>DisplayProductServlet</servlet-name>
+    <url-pattern>/products</url-pattern>
+  </servlet-mapping> -->
+
 </web-app>

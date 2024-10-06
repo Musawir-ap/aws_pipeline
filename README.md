@@ -91,6 +91,70 @@ sudo sed -i '/^root\s\+ALL=(ALL)\s\+ALL/a jenkins ALL=(ALL) NOPASSWD: ALL' /etc/
    - Ansible
    - Workspace Cleanup
 
+## Jenkins Master-Slave Node Setup
+
+This project uses Jenkins master-slave node distribution to optimize the build and deployment process. The master handles the orchestration, while the slave nodes handle the actual execution of jobs. Here's how to set up a new slave node:
+
+### Steps to Add Slave Nodes:
+
+1. **Configure a new node** in Jenkins (deploy, build):
+   - Go to **Manage Jenkins** > **Manage Nodes and Clouds**.
+   - Click **New Node** and fill in the configuration (node name, remote root directory, labels, etc.).
+   - Set the Remote Root Directory to the path where Jenkins should store data on the slave.
+   - Configure the Launch method (e.g., SSH or a JNLP agent).
+   - ![alt text](image.png)
+   - ![alt text](image-1.png)
+   
+2. **Assign jobs to specific nodes**:
+   - Use the node label to distribute jobs:
+     ```groovy
+     node('buil') {
+         // Build and deployment steps
+     }
+     ```
+This setup ensures optimized pipeline execution by distributing tasks across different nodes, resulting in better resource utilization and load management.
+
+## Setting Up Jenkins Credentials
+![alt text](image-2.png)
+### Docker Registry Credentials
+1. Navigate to **Jenkins Dashboard > Manage Jenkins > Manage Credentials**.
+2. Add **DockerHub credentials** (username and password).
+3. Store the credentials ID as `dockerhub-credentials-id` in Jenkins.
+![alt text](image-3.png)
+
+### Sudo Password
+1. Add the Sudo password as a **secret text credential** in Jenkins.
+2. Store the credentials ID as `SUDO_PASSWORD`.
+![alt text](image-4.png)
+
+### Jenkins Setup for Ansible Vault
+
+To securely use Ansible Vault in your Jenkins pipeline, follow these steps to set up a credentials file:
+
+1. **Create a Jenkins Credential File:**
+   - Go to Jenkins → Manage Jenkins → Credentials → System → Global credentials.
+   - Add a new credential:
+     - Kind: Secret file
+     - Upload a file containing the Ansible Vault password (e.g., `vault_pass`).
+     - Use a ID `ansible_vault_pass` for this credential
+     ![alt text](image-5.png)
+
+2. **Reference the Credential in Jenkins Pipeline:**
+
+In the Jenkinsfile, use the following syntax to load the vault password from the credential:
+
+```groovy
+withCredentials([file(credentialsId: 'ansible_vault_pass', variable: 'vault_password')]) {
+    ansiblePlaybook(
+        playbook: "${env.ANSIBLE_PLAYBOOK_PATH}",
+        inventory: "${env.ANSIBLE_INVENTORY_PATH}",
+        extras: "--vault-password-file=${vault_password}"
+    )
+}
+```
+
+This ensures that the vault password is not exposed in the logs or hardcoded in the scripts.
+
 ---
 
 ## Project Setup
@@ -121,6 +185,7 @@ pipeline {
         // Build Docker Image
         // Push to Docker Registry
         // Deploy with Ansible
+        // Setup Monitoring
     }
 
     post {
@@ -139,24 +204,6 @@ pipeline {
 }
 
 ```
-
-### Ansible Playbooks and Inventory
-- **Playbooks**: Located in `ansible/playbooks/deploy_k8s.yml`, used to deploy the Docker container to K3s.
-- **Inventory**: Located in `ansible/inventory.ini`.
-
----
-
-## Setting Up Jenkins Credentials
-
-### Docker Registry Credentials
-1. Navigate to **Jenkins Dashboard > Manage Jenkins > Manage Credentials**.
-2. Add **DockerHub credentials** (username and password).
-3. Store the credentials ID as `dockerhub-credentials-id` in Jenkins.
-
-### Sudo Password
-1. Add the Sudo password as a **secret text credential** in Jenkins.
-2. Store the credentials ID as `SUDO_PASSWORD`.
-
 ---
 
 ## Kubernetes Setup
@@ -170,6 +217,35 @@ The application is deployed on a **K3s** Kubernetes cluster using Ansible playbo
 
 ---
 
+### Ansible Playbooks and Inventory
+- **Playbook**: Located in `ansible/playbooks/deploy_k8s.yml`, used to deploy the Docker container to K3s.
+- **Playbook**: Located in `ansible/playbooks/setup_monitoring.yml`, used to setup k8s monitoring using Prometheus and Grafana.
+- **Inventory**: Located in `ansible/inventory.ini`.
+
+### Ansible Vault and Secrets
+
+The sensitive information like Grafana admin credentials and other secrets are stored securely using Ansible Vault.
+
+Steps to add `secret.yml`:
+
+1. Create your secrets file:
+
+```bash
+ansible-vault create ansible/playbooks/vars/secrets.yml
+```
+
+2. Add your sensitive data (e.g., Grafana credentials) inside the file and save with vault password (you need to save this to a file to set in ansible credentia).
+
+3. Use the following command to encrypt the file:
+
+```bash
+ansible-vault encrypt ansible/playbooks/vars/secrets.yml
+```
+
+4. Ensure the playbook is set to include this secrets file:
+
+---
+
 ## GitHub Webhook Setup for CI/CD
 
 To trigger Jenkins builds from GitHub, set up a webhook:
@@ -177,19 +253,31 @@ To trigger Jenkins builds from GitHub, set up a webhook:
 2. Add a new webhook pointing to your Jenkins server.
    - Payload URL: `http://<your-jenkins-url>/github-webhook/`
 
-### SocketXP for Public URL Testing
+### Using ngrok for GitHub Webhooks
 
-If your Jenkins is running on localhost, you can use **SocketXP** to expose it to the public:
-1. Install SocketXP:
-   ```bash
-   curl -s https://www.socketxp.com/install.sh | sudo bash
-   ```
-2. Generate a public URL:
-   ```bash
-   socketxp connect http://localhost:8080
-   ```
-   Use the generated URL as the GitHub webhook URL.
+If your Jenkins server is behind a firewall or on a local network, you can use **ngrok** to temporarily expose Jenkins for GitHub webhooks.
 
+#### Steps to Set Up ngrok:
+
+1. **Install ngrok** by following the [official installation guide](https://ngrok.com/download).
+2. Run ngrok to expose Jenkins:
+   ```bash
+   ngrok http <Jenkins-Server-Port>
+   ```
+   Example:
+   ```bash
+   ngrok http 8080
+   ```
+   ngrok will provide a public URL (e.g., `http://abcd1234.ngrok.io`) that forwards traffic to your local Jenkins instance.
+3. Set up a **GitHub webhook**:
+   - Go to your GitHub repository settings.
+   - Under **Webhooks**, click **Add webhook**.
+   - Set the **Payload URL** to the ngrok URL followed by `/github-webhook/`, e.g.:
+     ```
+     http://abcd1234.ngrok.io/github-webhook/
+     ```
+   - Set **Content type** to `application/json` and click **Add webhook**.
+   
 ---
 
 ## How to Run the Project
@@ -208,6 +296,42 @@ If your Jenkins is running on localhost, you can use **SocketXP** to expose it t
    - Create a new pipeline project in Jenkins.
    - Use the provided `Jenkinsfile` for the pipeline configuration.
    - Trigger the pipeline manually or through GitHub webhooks.
+
+---
+
+### Monitoring Overview
+
+The monitoring solution is fully automated through Ansible playbooks, so no manual steps are required to set up the monitoring stack. Below is an explanation of how to access the Grafana dashboard and interact with the monitoring solution.
+![alt text](image-6.png)
+![alt text](image-7.png)
+![alt text](image-8.png)
+
+### Accessing Grafana Dashboard
+
+Grafana is installed as part of the monitoring setup with a NodePort service. Since the NodePort is dynamically assigned, you can retrieve the Grafana NodePort by running the following command:
+
+```bash
+kubectl get svc -n <monitoring-namespace>
+```
+
+Example output:
+```
+NAME       TYPE       CLUSTER-IP     EXTERNAL-IP   PORT(S)        AGE
+grafana    NodePort   10.43.253.90   <none>        80:32758/TCP   10m
+```
+
+In this case, Grafana is accessible via port `32758`. You can access the Grafana dashboard using:
+
+```
+http://<node-ip>:<nodeport>
+```
+
+Example:
+```
+http://192.168.1.100:32758
+```
+
+You can log in with the default credentials provided during the setup.
 
 ---
 
@@ -296,4 +420,12 @@ Products-pipeline/
 
 ## Final Notes
 
-This project automates the full deployment lifecycle of a Maven-based Java web application, with Jenkins orchestrating the CI/CD process. Docker, Ansible, and Kubernetes work together to ensure reliable containerization and deployment to the K3s cluster.
+This project automates the deployment and monitoring of a Kubernetes-based application using modern DevOps tools like Ansible and Jenkins. By leveraging Ansible playbooks for infrastructure management and CI/CD pipelines through Jenkins, we achieve a seamless and efficient deployment process. Additionally, the integration of Prometheus and Grafana for monitoring allows for real-time insights into resource utilization, ensuring the application runs optimally in production.
+
+Key benefits of this project include:
+- **Full Automation**: From deployment to monitoring, everything is automated, reducing manual effort and potential errors.
+- **Scalability**: The use of Kubernetes ensures that the application can scale based on demand, while Jenkins' master-slave setup allows for efficient resource utilization in build and deployment tasks.
+- **Security**: The use of Ansible Vault for sensitive information like credentials ensures that secrets are handled securely within the CI/CD pipeline.
+- **Visibility**: Grafana provides an intuitive dashboard for monitoring key metrics, ensuring visibility into the health and performance of the application at all times.
+
+This project serves as a robust foundation for deploying and managing containerized applications in a scalable, secure, and monitored environment. By following best practices and leveraging automation, it minimizes operational overhead while maximizing reliability.

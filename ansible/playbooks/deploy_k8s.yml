@@ -132,6 +132,7 @@
         definition: "{{ lookup('file', item.path) }}"
         namespace: "{{ k8s_namespace }}"
         verify_ssl: false
+        wait: true
       loop:
         - { name: "MySQL Secrets", path: "../../k8s/secrets/mysql-secret.yaml" }
         - { name: "MySQL ConfigMap", path: "../../k8s/configmaps/mysql-initdb-config.yaml" }
