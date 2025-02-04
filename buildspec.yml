@@ -18,14 +18,15 @@ phases:
       java: corretto11
     commands:
       # Install base packages
-      - sudo yum update -y
-      - sudo yum install -y docker ansible python3-pip
+      # - sudo yum update -y
+      # - sudo yum install -y docker ansible python3-pip
 
       # Configure Docker
       # - sudo systemctl start docker
       # - sudo systemctl status docker
       - docker version
       - docker info
+      - java --version
       - whoami
       - sudo usermod -aG docker $(whoami)  # For CodeBuild execution user
 
@@ -34,18 +35,18 @@ phases:
       # - sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 
       # Install Python dependencies
-      - sudo pip3 install --upgrade pip
-      - sudo pip3 install kubernetes   # Required for Ansible k8s module
+      # - sudo pip3 install --upgrade pip
+      # - sudo pip3 install kubernetes   # Required for Ansible k8s module
 
-  pre_build:
-    commands:
-      # Docker authentication
-      - echo "Authenticating to Docker Hub..."
-      - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  # pre_build:
+  #   commands:
+  #     # Docker authentication
+  #     - echo "Authenticating to Docker Hub..."
+  #     - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
-      # Ansible vault setup
-      - echo "$VAULT_PASSWORD" > vault_pass.txt
-      - chmod 600 vault_pass.txt
+  #     # Ansible vault setup
+  #     - echo "$VAULT_PASSWORD" > vault_pass.txt
+  #     - chmod 600 vault_pass.txt
 
   # build:
   #   commands:
