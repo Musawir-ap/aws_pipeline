@@ -23,8 +23,9 @@ phases:
 
       # Configure Docker
       # - sudo systemctl start docker
-      - sudo systemctl status docker
-      - docker --version
+      # - sudo systemctl status docker
+      - docker version
+      - docker info
       - sudo usermod -aG docker ec2-user  # For CodeBuild execution user
 
       # Install kubectl
