@@ -22,8 +22,9 @@ phases:
       - sudo yum install -y docker ansible python3-pip
 
       # Configure Docker
-      - sudo systemctl start docker
-      - sudo systemctl enable docker
+      # - sudo systemctl start docker
+      - sudo systemctl status docker
+      - docker --version
       - sudo usermod -aG docker ec2-user  # For CodeBuild execution user
 
       # Install kubectl
