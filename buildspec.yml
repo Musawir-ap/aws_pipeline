@@ -27,8 +27,8 @@ phases:
       - docker version
       - docker info
       - java --version
-      - whoami
-      - sudo usermod -aG docker $(whoami)  # For CodeBuild execution user
+      # - whoami
+      # - sudo usermod -aG docker $(whoami)  # For CodeBuild execution user
 
       # Install kubectl
       # - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
