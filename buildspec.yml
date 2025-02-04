@@ -7,7 +7,7 @@ env:
     K8S_MONITORING_PLAYBOOK: 'ansible/playbooks/setup_monitoring.yml'
     ANSIBLE_INVENTORY_PATH: 'ansible/inventory.ini'
   secrets-manager:
-    DOCKER_USERNAME: 'dockerhub-credentials-id:username'  # Store in AWS Secrets Manager
+    DOCKER_USERNAME: 'dockerhub-credentials-id:username'
     DOCKER_PASSWORD: 'dockerhub-credentials-id:password'
     # SUDO_PASSWORD: 'SUDO_PASSWORD'
     VAULT_PASSWORD: 'vault-password-id'
@@ -15,27 +15,38 @@ env:
 phases:
   install:
     runtime-versions:
-      java: corretto11  # Amazon Corretto JDK
+      java: corretto11
     commands:
-      # Install required tools
-      - apt-get update -y
-      - apt-get install -y docker.io ansible
-      - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-      - install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+      # Install base packages
+      - sudo yum update -y
+      - sudo yum install -y docker ansible python3-pip
+
+      # Configure Docker
+      - sudo systemctl start docker
+      - sudo systemctl enable docker
+      - sudo usermod -aG docker ec2-user  # For CodeBuild execution user
+
+      # Install kubectl
+      # - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+      # - sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+      # Install Python dependencies
+      - sudo pip3 install --upgrade pip
+      - sudo pip3 install kubernetes   # Required for Ansible k8s module
 
   pre_build:
     commands:
-      # Docker login using secrets
+      # Docker authentication
       - echo "Authenticating to Docker Hub..."
       - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
-      # Create Ansible vault password file
+      # Ansible vault setup
       - echo "$VAULT_PASSWORD" > vault_pass.txt
       - chmod 600 vault_pass.txt
 
   # build:
   #   commands:
-  #     # Maven build steps
+  #     # Maven build
   #     - mvn clean install -Dmaven.test.skip=true
   #     - mvn test
   #     - mvn clean package -Dmaven.test.skip=true
@@ -54,7 +65,7 @@ phases:
   #         --extra-vars "ansible_become_pass=$SUDO_PASSWORD" \
   #         -v
 
-  #     # Monitoring setup with vault
+  #     # Monitoring setup
   #     - ansible-playbook $K8S_MONITORING_PLAYBOOK \
   #         -i $ANSIBLE_INVENTORY_PATH \
   #         --extra-vars "ansible_become_pass=$SUDO_PASSWORD" \
@@ -68,5 +79,5 @@ artifacts:
 
 cache:
   paths:
-    - '/root/.m2/**/*'  # Maven cache
-    - '/root/.docker/**/*'  # Docker cache
+    - '~/.m2/**/*'
+    - '~/.docker/**/*'
