@@ -16,13 +16,10 @@ public class DisplayProductServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        // Fetch all products
         List<RetailModule> productList = retailDataImp.getAll();
 
-        // Set the product list as a request attribute
         request.setAttribute("products", productList);
 
-        // Forward the request to the JSP page
         request.getRequestDispatcher("/displayProducts.jsp").forward(request, response);
     }
 }

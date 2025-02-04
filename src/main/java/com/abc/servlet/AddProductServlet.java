@@ -41,34 +41,6 @@ public class AddProductServlet extends HttpServlet {
         retailData.create(newProduct); // Use the create method from RetailDataImp
 
         // Redirect back to the index after adding the product
-        response.sendRedirect("index.jsp");
+        response.sendRedirect("/products");
     }
 }
-
-// @WebServlet("/addProduct")
-// public class AddProductServlet extends HttpServlet {
-//     private static final long serialVersionUID = 1L;
-
-//     @Override
-//     protected void doGet(HttpServletRequest request, HttpServletResponse response)
-//             throws ServletException, IOException {
-//         // Forward to addProduct.jsp to render the form
-//         request.getRequestDispatcher("addProduct.jsp").forward(request, response);
-//     }
-
-//     @Override
-//     protected void doPost(HttpServletRequest request, HttpServletResponse response)
-//             throws ServletException, IOException {
-//         // Handle form submission to add product
-
-//         String productName = request.getParameter("productName");
-//         double price = Double.parseDouble(request.getParameter("price"));
-
-//         // Access DAO and add product logic
-//         RetailDataImp retailData = new RetailDataImp();
-//         retailData.addProduct(productName, price);
-
-//         // Redirect back to the index after adding the product
-//         response.sendRedirect("index.jsp");
-//     }
-// }

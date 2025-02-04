@@ -1,0 +1,83 @@
+version: 0.2
+env:
+  variables:
+    DOCKER_REGISTRY: 'devmusawir'
+    DOCKER_IMAGE: 'products-app'
+    DEPLOY_K8S_PLAYBOOK: 'ansible/playbooks/deploy_k8s.yml'
+    K8S_MONITORING_PLAYBOOK: 'ansible/playbooks/setup_monitoring.yml'
+    ANSIBLE_INVENTORY_PATH: 'ansible/inventory.ini'
+  secrets-manager:
+    DOCKER_USERNAME: 'dockerhub-credentials-id:username'
+    DOCKER_PASSWORD: 'dockerhub-credentials-id:password'
+    # SUDO_PASSWORD: 'SUDO_PASSWORD'
+    VAULT_PASSWORD: 'vault-password-id'
+
+phases:
+  install:
+    runtime-versions:
+      java: corretto11
+    commands:
+      # Install base packages
+      - sudo yum update -y
+      - sudo yum install -y docker ansible python3-pip
+
+      # Configure Docker
+      - sudo systemctl start docker
+      - sudo systemctl enable docker
+      - sudo usermod -aG docker ec2-user  # For CodeBuild execution user
+
+      # Install kubectl
+      # - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+      # - sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+      # Install Python dependencies
+      - sudo pip3 install --upgrade pip
+      - sudo pip3 install kubernetes  # Required for Ansible k8s module
+
+  pre_build:
+    commands:
+      # Docker authentication
+      - echo "Authenticating to Docker Hub..."
+      - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+      # Ansible vault setup
+      - echo "$VAULT_PASSWORD" > vault_pass.txt
+      - chmod 600 vault_pass.txt
+
+  # build:
+  #   commands:
+  #     # Maven build
+  #     - mvn clean install -Dmaven.test.skip=true
+  #     - mvn test
+  #     - mvn clean package -Dmaven.test.skip=true
+
+  #     # Docker build
+  #     - docker build -t $DOCKER_REGISTRY/$DOCKER_IMAGE:latest .
+
+  # post_build:
+  #   commands:
+  #     # Push Docker image
+  #     - docker push $DOCKER_REGISTRY/$DOCKER_IMAGE:latest
+
+  #     # Kubernetes deployment
+  #     - ansible-playbook $DEPLOY_K8S_PLAYBOOK \
+  #         -i $ANSIBLE_INVENTORY_PATH \
+  #         --extra-vars "ansible_become_pass=$SUDO_PASSWORD" \
+  #         -v
+
+  #     # Monitoring setup
+  #     - ansible-playbook $K8S_MONITORING_PLAYBOOK \
+  #         -i $ANSIBLE_INVENTORY_PATH \
+  #         --extra-vars "ansible_become_pass=$SUDO_PASSWORD" \
+  #         --vault-password-file vault_pass.txt \
+  #         -v
+
+artifacts:
+  files:
+    - '**/*'
+  discard-paths: yes
+
+cache:
+  paths:
+    - '~/.m2/**/*'
+    - '~/.docker/**/*'
